@@ -38,7 +38,7 @@ rupfront (double **s_depth, double **vs, int num_model_depth, double *nx, double
 
           double agemax=0.0, agemin;
           double depthsum=0, s_depth_max, vrupmean=0.0;
-          double rupvel2=0.7;
+          double rupvel2=0.6;
 
           int i,k,ns;
           int ixhypo, iyhypo, ix, iy,inx, iny,ixy;
@@ -200,10 +200,7 @@ rupfront (double **s_depth, double **vs, int num_model_depth, double *nx, double
                    else if (z[i]>5.0 && z[i]<8.0)
                      { vrup[ix][iy]= vrup[ix][iy]*((1-rupvel2)/3.*z[i]+1-8./3.*(1-rupvel2));
                        fac=((1-rupvel2)/3.*z[i]+1-8./3.*(1-rupvel2));
-                       //printf("%lf %lf %f %lf %lf \n", z[i], vrup[ix][iy],fac, (1-rupvel2)/3.*z[i], 1-8./3.*(1-rupvel2));
                      }
-//                  printf("nx=%lf, ny=%lf,z=%lf, vrup[%d][%d]= %lf, s_depth=%lf, vs=%lf\n", nx[i], ny[i],z[i]*1000.0, ix,iy,vrup[ix][iy], s_depth[k], vs[k]);
-//                    printf("%lf %lf %lf %lf %f \n", nx[i], ny[i],z[i]*1000.0, vrup[ix][iy],fac);
            	 }
 
            for(ix=ixhypo-1; ix<ixhypo+1; ix++)

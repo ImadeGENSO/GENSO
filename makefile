@@ -10,5 +10,5 @@ clean:
 genso: genso.o
 	$(CC) $(CFLAGS) genso.o -o genso $(LDFLAGS)
 
-genso.o: genso.c soumod.c readidem.c readidem2.c readidem3.c velocity.c rupfront.c disazi.c risetime.c
+genso.o: genso.c soumod.c readidem.c readidem2.c readidem3.c velocity.c rupfront.c disazi.c risetime.c 
 	$(CC) $(CFLAGS) -c genso.c 

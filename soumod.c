@@ -34,6 +34,7 @@ soumod (char *sourceold, char *modtype, double disc, double Me, double rupvel,
 {
   FILE *fin3, *fout, *fout2;
   char outname[] = "rupture.out";
+  char compare[14];
   char *kfile;
   char data[256];
   double reflat, reflon, refdepth, strike, rake;
@@ -67,7 +68,10 @@ soumod (char *sourceold, char *modtype, double disc, double Me, double rupvel,
   float REARTH = 6.371 * pow (10, 3);	// radius of earth in km
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  if (strcmp (sourceold, "new") != 0)
+  strncpy(compare, sourceold, 3);
+  compare[3]='\0';
+  printf("compare=%s\n",compare);
+  if (strcmp (compare, "new") != 0)
 	  { seed2 = -fabs (seed);
         old=1;
         if (strcmp (modtype, "idem") == 0)
@@ -117,7 +121,6 @@ soumod (char *sourceold, char *modtype, double disc, double Me, double rupvel,
 	      }
         *dip1=*dip1/ns;
         printf(" dip1=%lf\n",*dip1);
- //       maxoy = maxoy + odiscy;
         printf ("disc=%lf, maxox=%lf, maxoy=%lf\n", disc, maxox, maxoy);
 //resampling of slipmap
         nns = (int) (ceil (oxdim / disc) * ceil (oydim / disc));	// number of patches
@@ -310,7 +313,7 @@ soumod (char *sourceold, char *modtype, double disc, double Me, double rupvel,
     }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  else if (ns == 11 || ns == 12)	// case 2) create new random slip distribution
+  else if (strcmp (compare, "new") == 0)    // case 2) create new random slip distribution
     {
       old = 0;
       fin3 = fopen (sourceold, "r");
@@ -547,7 +550,7 @@ soumod (char *sourceold, char *modtype, double disc, double Me, double rupvel,
 
     //  calculate spectrum with random phases and amplitude decay 1/(k)^(2) corresponding to a Hurst exponent of 1 for k higher than the corner wavenumber kc  
       kc=pow(10,(1.82-0.5*(Me))); 		// corner wavenumber according to Causse et al. (2010), 
-      kcy=3.0*MAX(odiscx/oxdim, odiscy/oydim);
+      kcy=1/(4.0*odiscx);
       kcy_int=kcy*0.8;
     // combine spectra of old and random distribution if old slip is given
       if(old==1)
@@ -641,7 +644,7 @@ soumod (char *sourceold, char *modtype, double disc, double Me, double rupvel,
       dft2d (nsy, nsx, 1, specREnew, specIMnew, REslipnew, IMslipnew);
       dft2d (nsy, nsx, 1, FTsurfRE, FTsurfIM, REsurf, IMsurf);
     // set negativ values of slip to 0 by substracting the minimum value 
-      minslip=REslip[1];
+      minslip=REslipnew[1];
       for(i=1;i<=nns;i++)
         { if (minslip>REslipnew[i])
           {  minslip=REslipnew[i];
@@ -717,8 +720,8 @@ soumod (char *sourceold, char *modtype, double disc, double Me, double rupvel,
       fprintf (fout, "#  lat  lon x[km] y[km] heigth\n");
       for (i = 1; i <= nns; i++)
 	    { REsurf[i] = REsurf[i] / maxsurf * height;
-//	      fprintf (fout, "%8.4lf\t %8.4lf\t%lf\t%lf\t%lf\n",
-//				   lat[i], lon[i], nx[i], ny[i], REsurf[i]);
+	      fprintf (fout, "%8.4lf\t %8.4lf\t%lf\t%lf\t%lf\n",
+				   lat[i], lon[i], nx[i], ny[i], REsurf[i]);
 	    }
       fclose(fout);
       // calculate deviations of strike and dip as local angles along the fractal surface
@@ -857,7 +860,7 @@ soumod (char *sourceold, char *modtype, double disc, double Me, double rupvel,
 		  }
             printf("Daten geschrieben\n");
 	  }
-  else if (smooth == 0) // output for refined slip distribution
+  else if (smooth == 0 && old == 1) // output for refined slip distribution
 	  { for (k = 1; k <= nns; k++)
 			  { //printf("k=%d \n",k);
 			       fprintf (fout2,
@@ -869,7 +872,19 @@ soumod (char *sourceold, char *modtype, double disc, double Me, double rupvel,
 //						   lon[k], vel[k], nx[k], ny[k]);
 
 			  }
+          }
+  else if (smooth == 0 && old == 0) // output for refined slip distribution
+	  { for (k = 1; k <= nns; k++)
+			  { //printf("k=%d \n",k);
+			       fprintf (fout2,
+						   "%8.4lf\t %8.4lf\t %lf\t %lf\t %lf\t %lf\t %lf\t %lf\t %lf\t %lf\t %lf\t %lf\n",
+						   lat[k], lon[k], z[k],
+						   REslip[k]/slipsum*moment+0.00001, drake[k],
+						   dstrike[k], ddip[k], nx[k], ny[k]);
+//				    fprintf (fout, "%8.4lf\t %8.4lf\t %lf\t %lf\t %lf\t \n", lat[k],
+//						   lon[k], vel[k], nx[k], ny[k]);
 
+			  }
 	  }
   fclose (fout2);
   fclose (fout);

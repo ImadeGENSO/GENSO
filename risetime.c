@@ -11,13 +11,11 @@
 void
 risetime (int num_seg, int sum_patch, double *moment, double *depth, double *slip, double *rake, double *strike, double *dip,
 		double *time1, int num_model_depth, double *s_depth, double *vp, double *vs, double *rho, double menergy,
-		double vprec, double vsrec, double rhorec, double duration, double dt, double fhighcut, double *rise,
-		double *rmsopt, double *kopt, double *opt_slope, double *opt_y, double rupvel)
+		double vprec, double vsrec, double rhorec, double duration, double dt, double fhighcut, double *rise, double rupvel)
   { double momsum=0.0, dmsum;
     double sm[3][3];
     double *vps, *vss, *rhos;
     double *fcp;
-//    double REsf[nt], IMsf[nt];
     double st, ra, di;
     double es0, es, tau, scale;
     double risemean=0.0;
@@ -29,9 +27,10 @@ risetime (int num_seg, int sum_patch, double *moment, double *depth, double *sli
     double complex sfct[nt];
     int i,k, jfst ;
     int ntst;
-    //double rmsopt, kopt, opt_slope, opt_y;
+    int numite=0;
     FILE *fout;
     char *outfile, strrupvel[80];
+    
     double  DEG2RAD=1.745329252e-02;
     double  PI= 4.0 * atan (1.0);
 /////////////////////////////////////////////////////////
@@ -61,7 +60,7 @@ risetime (int num_seg, int sum_patch, double *moment, double *depth, double *sli
           vss[i]=0.0;
           k=1;
           while(vss[i]==0.0)
-   	    { //printf("i=%d, depth[i]=%lf\n",i+1, depth[i]);
+   	    { 
               if(depth[i]*1000.0<=s_depth[k])
                 { vss[i]= vs[k];
                   vps[i]=vp[k];
@@ -77,9 +76,6 @@ risetime (int num_seg, int sum_patch, double *moment, double *depth, double *sli
                   rhos[i]=rho[num_model_depth];
                   k=1;
                 }
-   		  //    if (i>=1324)
-   		    //    { printf("i=%d, vs[k]=%lf, k=%d\n", i, vs[k],k);
-   		      //  }
 
             }
           fcp[i]=1.0/(2*PI*tau)*100;
@@ -105,8 +101,6 @@ risetime (int num_seg, int sum_patch, double *moment, double *depth, double *sli
     printf("momsum=%lf, dmsum=%lf\n", momsum, dmsum);
     for (i=1; i<=sum_patch; i++)
        	{slip[i]=slip[i]*momsum/dmsum;
-//       	 fcp[i]=1.0/(2*PI*tau)*100;
-//       	 fcp[i]=fcp[i]*(vss[i]/vsrec);
      	}
         ////////////////////////////////////////////////////////
        /// radiated seismic energy, corner frequency and rise time
@@ -122,28 +116,18 @@ risetime (int num_seg, int sum_patch, double *moment, double *depth, double *sli
     for(jfst=0; jfst<nt;jfst++)
       {//equally spaced bins on logarithmic axes
         fst[jfst]=pow(10,(((log10(maxfreq)-log10(1*dfst))*jfst/nt)+log10(1*dfst)));
-      //  fst[jfst]=jfst*dfst;
       }
     //calculation of source function and differenciation
     //    (multiply 2PIf in frequency domain)
 
     scale=1000.0;
-    while(scale>1.01 || scale<0.99)
-      {
+    while((scale>1.01 || scale<0.99) && numite < 150)
+      { numite++;
         for(jfst=0;jfst<ntst/2;jfst++)
           { sfct[jfst]=0.0;
-//            REsf[jfst]=0.0;
-//            IMsf[jfst]=0.0;
         	for (i=1; i<=sum_patch; i++)
-        	  { //t0=(int)(time1[i]/dt)*dt;
+        	  { 
                     t0=time1[i];
-       	    	//sfct[jfst]=sfct[jfst]+(slip[i])*(cos(-2*PI*fst[jfst]*t0)+I*sin(-2*PI*fst[jfst]*t0))
-        	      //   /((1.0-fst[jfst]*fst[jfst]/(fcp[i]*fcp[i]))+I*(2.0*fst[jfst]/fcp[i]))*sqrt((1.0+2.0/3.0*pow(vss[i]/vps[i],5))
-       	         //    /(10.0*PI*rhos[i]*pow(vss[i],5)));
-      //	    sfct[jfst]=sfct[jfst]+(slip[i])*cexp(-2*PI*fst[jfst]*t0*I)
-    //  	                  	         /cpow((1.0+2*PI*fst[jfst]/fcp[i]*I),2)
-  //    	                  	         *sqrt((1.0+2.0/3.0*pow(vss[i]/vps[i],5))
-//      	                  	         /(10.0*PI*rhos[i]*pow(vss[i],5)));;
                     sfct[jfst]=sfct[jfst]+(slip[i])*cexp((-2*PI*fst[jfst]*t0-2.0*atan2(2*PI*fst[jfst]/fcp[i],1))*I)
                                  /(1.0+4*PI*PI*fst[jfst]*fst[jfst]/(fcp[i]*fcp[i]))*sqrt((1.0+2.0/3.0*pow(vss[i]/vps[i],5))
                                                  /(10.0*PI*rhos[i]*pow(vss[i],5)));
@@ -164,8 +148,6 @@ risetime (int num_seg, int sum_patch, double *moment, double *depth, double *sli
         printf("bla\n");
         for(jfst=1; jfst<ntst/2; jfst++)
         	{ es=es+pow(cabs(sfct[jfst]),2)*(fst[jfst]-fst[jfst-1]);
-        	//{ es=es+pow(cabs(sfct[jfst]),2);
-        	  //printf("sfct[jfst]= %lf df=%lf es=%lf \n",cabs(sfct[jfst]), fst[jfst],es);
         	}
         es=es*2.0;
         ////     compare with es0 (which was calculated from the energy magnitude)
@@ -178,11 +160,15 @@ risetime (int num_seg, int sum_patch, double *moment, double *depth, double *sli
         	}
         printf("scale=%lf, es0=%lf, es=%lf, ME=%lf\n",scale, es0, es,menergy);
       }
+    if (numite>=150)
+      { printf("Too many iterations\n");
+        exit(1);
+      }
     for (i=1; i<=sum_patch; i++ )
-       {
+      {
         rise[i]=1.0/(fcp[i]);
         risemean=risemean+rise[i];
-       }
+      }
     risemean=risemean/(sum_patch-1);
     printf("risemean= %lf\n", risemean);
 /////////////////////////////////////////////
@@ -190,14 +176,11 @@ risetime (int num_seg, int sum_patch, double *moment, double *depth, double *sli
     sprintf(strrupvel,"%lf",rupvel);
     outfile= strcat(strrupvel, "_f_sfct.dat");
     fout = fopen (outfile, "w");
-    //fout = fopen ("f_sfct.dat", "w");
     fprintf (fout, "f[Hz]         Spec\n");
     for(jfst=0; jfst<ntst/2; jfst++)
     	{ sfct[jfst]=0.0;
     	  for (i=1; i<=sum_patch; i++)
-    		  { //t0=(int)(time1[i]/dt)*dt;
-    		  //sfct[jfst]=sfct[jfst]+(slip[i])*(cos(-2*PI*fst[jfst]*t0)+I*sin(-2*PI*fst[jfst]*t0))
-    		  //        	         /((1.0-fst[jfst]*fst[jfst]/(fcp[i]*fcp[i]))+I*(2.0*fst[jfst]/fcp[i]));
+    		  { 
                   sfct[jfst]=sfct[jfst]+(slip[i])*cexp((-2*PI*fst[jfst]*time1[i]-2.0*atan2(2*PI*fst[jfst]/fcp[i],1))*I)
                                  /(1.0+4*PI*PI*fst[jfst]*fst[jfst]/(fcp[i]*fcp[i]));
     		  }
@@ -213,7 +196,6 @@ risetime (int num_seg, int sum_patch, double *moment, double *depth, double *sli
 */
     fclose(fout);
     
-
     free_dvector (vps,1,sum_patch);
     free_dvector (vss,1,sum_patch);
     free_dvector (rhos,1,sum_patch);

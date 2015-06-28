@@ -48,12 +48,9 @@ int main (void)
             *rise;
     double *optrise, *opttime1;
     double *rupnx, *rupny, *rupz, *time2;
-  //  double *latold, *lonold, *depthold;
     double duration=0.0;
     double *dip1;
     double dt, window, fhighcut;
-    double rmsopt, kopt, opt_slope, opt_y,rupvelopt;
-    double rmsopt1, kopt1, opt_slope1, opt_y1;
 
     //// read input file
     printf ("name of input file?\n");
@@ -78,7 +75,6 @@ int main (void)
     i=0;
     while (fgets (data, 256, fin) != NULL)
     	{ sscanf(data,"%*2s %s %*s\n",dummy);
-          //printf("dummy=%s\n", dummy);
     	  if (strcmp (dummy, "n_seg") == 0)
     		  { fgets (data, 256, fin);
     		    fgets (data, 256, fin);
@@ -93,7 +89,7 @@ int main (void)
     			dip1=dvector(1,num_seg);
     		    printf("num_seg=%d, Me=%lf \n",num_seg,Me);
     		  }
-    	  if (strcmp (dummy, "mdis") == 0)
+    	  if (strcmp (dummy, "file_name") == 0)
     		  { fgets (data, 256, fin);
     		    while (i<num_seg)
     		    	{ fgets (data, 256, fin);
@@ -103,13 +99,13 @@ int main (void)
     		    	   	{ *pch='E';
     		    	   	   pch=strchr(pch+1,'d');
     		    	   	}
-    		    	  sscanf(data,"%*d %le %lf %lf %lf %*s\n",&moment[i],&seglat[i], &seglon[i], &segdepth[i]);
+    		    	  sscanf(data,"%*d %le %lf %lf %lf \n",&moment[i],&seglat[i], &seglon[i], &segdepth[i]);
     		          printf("segment=%d\n",i);
     		          fgets (data, 256, fin);
     		          fgets (data, 256, fin);
     		          sscanf(data,"%lf %d %s %s\n", &rupvel, &seed, taperswitch, modtype);
     		          fgets (data, 256, fin);
-    		          sscanf(data,"%*d %s %*f %lf\n", &sourcefile[0], &new_dstep[i]);
+    		          sscanf(data,"%s %lf\n", &sourcefile[0], &new_dstep[i]);
      		          printf("sourcefile = %s, new_dstep=%lf seglat=%lf, seglon=%lf, segdepth=%lf, moment[is]=%le\n",
      		        		  &sourcefile[0], new_dstep[i], seglat[i],seglon[i],segdepth[i], moment[i]);
 
@@ -127,14 +123,12 @@ int main (void)
     		              printf("stop: could not allocate fine_file\n");
     		              exit(1);
     		            }
-                        //  fine_file[i]=cvector (1,strlen(sourcefile));
     		          strcpy(fine_file[i], sourcefile);
     		          printf("fine_file=%s, i=%d\n", fine_file[i],i);
     		          i++;
     		    	}
     		  }
     	}
- //   printf("number of segments is %d", num_seg);
     // allocate memory for  all patches:
 
     fclose (fin);
@@ -151,107 +145,66 @@ int main (void)
     optrise = dvector (1, sum_patch);
     time1 = dvector (1, sum_patch);
     rise = dvector (1, sum_patch);
-//////////////////////////////////////
-//// iterate over rupture velocity to find optimal rupture velocity
-///////////////////////////////////////////
-      
-     // allocate memory for optimal values
-
         // read all patches
-        k=1;
-        for (i=0;i<num_seg; i++)
-            { printf("fine_file=%s\n", fine_file[i]);
-              fin = fopen (fine_file[i], "r");
-              l=1;
-              kstart=k;
-              time2 = dvector (1, num_patch[i]);
-              rupnx = dvector (1, num_patch[i]);
-              rupny = dvector (1, num_patch[i]);
-              rupz = dvector (1, num_patch[i]);
-              while (fgets (data, 256, fin) != NULL)
-            	{ if (data[0]!='#')
-            		{ sscanf(data,"%lf %lf %lf %lf %lf %lf %lf %lf %lf \n",&lat[k],&lon[k],
-            				&depth[k],&slip[k],&rake[k],&strike[k],&dip[k], &nx[k], &ny[k]);
-            		  rupnx[l]=nx[k];
-            		  rupny[l]=ny[k];
-            		  rupz[l]=depth[k];
-    
-            		  k++;
-            		  l++;
-            		}
-            	}
-              printf("num_patch=%d, l=%d\n",num_patch[i],l);
-              fclose(fin);
-              kstop=k;
-              //////////////////////////////////////////////////////////////////////////////////////
-              /// Calculate rupture time
-              /////////////////////////////////////////////////////////////////////////////////////
-              printf(" dip1=%lf, lathypo=%lf, lonhypo=%lf, seglat=%lf, seglon=%lf\n",dip1[i], lathypo, lonhypo, seglat[i], seglon[i]);
-              rupfront(&s_depth, &vs, num_model_depth, rupnx,rupny, rupz, num_patch[i], new_dstep[i],
-                       lathypo, lonhypo, dephypo, seglat[i], seglon[i], segdepth[i],
-                       dip1[i], rupvel,time2);
-              l=1;
-              for (k=kstart;k<kstop; k++)
-            	  { //printf("k=%d, l=%d, time2=%lf\n", k,l,time2[k]);
-                        time1[k]=time2[l];
-            		l++;
-    			    if (time1[k]>duration)
-    			      { duration=time1[k];
-    			      }
-            	  }
-                  free_dvector (time2,1,num_patch[i]);
+    k=1;
+    for (i=0;i<num_seg; i++)
+        { printf("fine_file=%s\n", fine_file[i]);
+          fin = fopen (fine_file[i], "r");
+          l=1;
+          kstart=k;
+          time2 = dvector (1, num_patch[i]);
+          rupnx = dvector (1, num_patch[i]);
+          rupny = dvector (1, num_patch[i]);
+          rupz = dvector (1, num_patch[i]);
+          while (fgets (data, 256, fin) != NULL)
+        	{ if (data[0]!='#')
+        		{ sscanf(data,"%lf %lf %lf %lf %lf %lf %lf %lf %lf \n",&lat[k],&lon[k],
+        				&depth[k],&slip[k],&rake[k],&strike[k],&dip[k], &nx[k], &ny[k]);
+        		  rupnx[l]=nx[k];
+        		  rupny[l]=ny[k];
+        		  rupz[l]=depth[k];
+
+        		  k++;
+        		  l++;
+        		}
         	}
-    
-    //
-        risetime(num_seg, sum_patch, moment, depth, slip, rake, strike, dip,
-        		time1, num_model_depth, s_depth, vp, vs, density, Me,
-        		vprec, vsrec, rhorec, duration, dt, fhighcut, rise,
-        		&rmsopt1, &kopt1, &opt_slope1, &opt_y1, rupvel);
-        printf("rupvel=%lf, kopt1=%lf, rmsopt1=%lf, opt_slope1=%lf, opt_y1=%lf\n", rupvel, kopt1, rmsopt1, opt_slope1, opt_y1);
-         //printf("copy vales here!\n time1[1]=%lf opttime1[1]=%lf\n", time1[1], opttime1[1])
-            kopt=kopt1;
-            rmsopt=rmsopt1;
-            opt_slope=opt_slope1;
-            opt_y=opt_y1;
-            memcpy(&opttime1[1], &time1[1], sum_patch*sizeof(time1[1]));
-            memcpy(&optrise[1], &rise[1], sum_patch*sizeof(rise[1]));
-            rupvelopt=rupvel;
-            printf("copy vales here!\n time1[1]=%lf opttime1[1]=%lf\n", time1[1], opttime1[1]);
-         
-        printf("rupvelopt=%lf ,kopt=%lf, rmsopt=%lf, opt_slope=%lf, opt_y=%lf\n", rupvelopt,kopt, rmsopt, opt_slope, opt_y);
-      
-    /*    i=0;
-        k=0;
-    while (i<num_seg)
-      { fout = fopen (fine_file[i], "w");
-        l=0;
-    	while (l<num_patch[i])
-          { fprintf (fout,
-    				 "%8.4lf\t %8.4lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\n",
-    				 lat[k], lon[k], depth[k], slip[k], rake[k], strike[k],
-    				 dip[k], nx[k], ny[k],time1[k],rise[k]);
-            k++;
-            l++;
-          }
-    	fclose(fout);
-    	i++;
-    	printf("Daten %d geschrieben\n", i-1);
-*/
-    { fout = fopen ("source.out", "w");
-      fprintf (fout,"%d\n", sum_patch-1);
-      for (k=1;k<sum_patch; k++)
-         { //printf("k=%d, sumpatch=%d, nx[k]=%lf, %lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf\n",k,sum_patch, nx[k],lat[k], lon[k], depth[k], slip[k], strike[k],
-           //                      dip[k],rake[k], opttime1[k],optrise[k]);
-        // printf("k=%d, lat[k]=%lf, %lf,%lf,%lf,%lf,%lf,%lf,%lf\n",k, nx[k],lat[k], lon[k], depth[k], slip[k], strike[k],
-            //                              dip[k],rake[k]);
-        //printf("k=%d, lat[k]=%lf, %lf\n",k, opttime1[k],optrise[k]);
-           fprintf (fout,
-  				 "%8.4lf\t %8.4lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\n",
-  				 lat[k], lon[k], depth[k], slip[k], strike[k],
-  				 dip[k],rake[k], opttime1[k],optrise[k], nx[k], ny[k]);
+          printf("num_patch=%d, l=%d\n",num_patch[i],l);
+          fclose(fin);
+          kstop=k;
+          //////////////////////////////////////////////////////////////////////////////////////
+          /// Calculate rupture time
+          /////////////////////////////////////////////////////////////////////////////////////
+          printf(" dip1=%lf, lathypo=%lf, lonhypo=%lf, seglat=%lf, seglon=%lf\n",dip1[i], lathypo, lonhypo, seglat[i], seglon[i]);
+          rupfront(&s_depth, &vs, num_model_depth, rupnx,rupny, rupz, num_patch[i], new_dstep[i],
+                   lathypo, lonhypo, dephypo, seglat[i], seglon[i], segdepth[i],
+                   dip1[i], rupvel,time2);
+          l=1;
+          for (k=kstart;k<kstop; k++)
+        	  { //printf("k=%d, l=%d, time2=%lf\n", k,l,time2[k]);
+                    time1[k]=time2[l];
+        		l++;
+			    if (time1[k]>duration)
+			      { duration=time1[k];
+			      }
+        	  }
+              free_dvector (time2,1,num_patch[i]);
+    	}
+
+//
+    risetime(num_seg, sum_patch, moment, depth, slip, rake, strike, dip,
+    		time1, num_model_depth, s_depth, vp, vs, density, Me,
+    		vprec, vsrec, rhorec, duration, dt, fhighcut, rise,rupvel);
+ 
+    fout = fopen ("source.out", "w");
+    fprintf (fout,"%d\n", sum_patch-1);
+    for (k=1;k<sum_patch; k++)
+        { fprintf (fout,
+				 "%8.4lf\t %8.4lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\t%lf\n",
+				 lat[k], lon[k], depth[k], slip[k], strike[k],
+				 dip[k],rake[k], time1[k],rise[k], nx[k], ny[k]);
         }
-  	fclose(fout);
-      }
+    fclose(fout);
+      
     printf("Daten geschrieben\n");
 
     free_dvector (moment, 1, num_seg);
