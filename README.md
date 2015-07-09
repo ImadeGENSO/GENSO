@@ -19,3 +19,8 @@ GENSO reads an exisiting source description, refines the discretisation to the s
   
 - The rise time is scaled such that the radiated seismic energy of the simulated rupture matches the energy magnitude 
                   specified in the input file
+
+An example input file is given in the in folder "example_files". It contains the file example.inp and 5 source files with a slip distribution with corse discretisation. GENSO will refine the discretisation and keep the low-wavenumber part of the discretisation while adding random components to the high-wavenumber part of the slip and roughness distribution.
+
+For further reading, please refer to Kieling, K., Wang, R., Hainzl, S. (2014): Broadband Ground-Motion Simulation Using Energy-Constrained Rise-Time Scaling. - Bulletin of the Seismological Society of America, 104, 6, p. 2683-2697.
+DOI: http://doi.org/10.1785/0120140063
