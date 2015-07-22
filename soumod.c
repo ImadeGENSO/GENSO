@@ -716,14 +716,9 @@ soumod (char *sourceold, char *modtype, double disc, double Me, double rupvel,
 	    { height = oxdim * aspect;
 	    }
    
-      fout = fopen ("surface", "w");
-      fprintf (fout, "#  lat  lon x[km] y[km] heigth\n");
       for (i = 1; i <= nns; i++)
 	    { REsurf[i] = REsurf[i] / maxsurf * height;
-	      fprintf (fout, "%8.4lf\t %8.4lf\t%lf\t%lf\t%lf\n",
-				   lat[i], lon[i], nx[i], ny[i], REsurf[i]);
 	    }
-      fclose(fout);
       // calculate deviations of strike and dip as local angles along the fractal surface
       printf ("disc=%lf \n", disc);
       dstrike = dvector (1, nns+1);
@@ -868,8 +863,6 @@ soumod (char *sourceold, char *modtype, double disc, double Me, double rupvel,
 						   lat[k], lon[k], z[k],
 						   REslip[k]/slipsum*moment+0.00001, drake[k],
 						   dstrike[k], ddip[k], nx[k], ny[k], latold[k], lonold[k], depthold[k]);
-//				    fprintf (fout, "%8.4lf\t %8.4lf\t %lf\t %lf\t %lf\t \n", lat[k],
-//						   lon[k], vel[k], nx[k], ny[k]);
 
 			  }
           }
@@ -881,8 +874,6 @@ soumod (char *sourceold, char *modtype, double disc, double Me, double rupvel,
 						   lat[k], lon[k], z[k],
 						   REslip[k]/slipsum*moment+0.00001, drake[k],
 						   dstrike[k], ddip[k], nx[k], ny[k]);
-//				    fprintf (fout, "%8.4lf\t %8.4lf\t %lf\t %lf\t %lf\t \n", lat[k],
-//						   lon[k], vel[k], nx[k], ny[k]);
 
 			  }
 	  }

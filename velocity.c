@@ -70,7 +70,7 @@ velocity (char *greensfile, double **s_depth, double **vp, double **vs, double *
 	    	       pch=strchr(pch+1,'D');
 	    	    }
 	    	  sscanf(data,"%le %le %le %le \n",&(*s_depth)[i], &(*vp)[i], &(*vs)[i], &(*density)[i]);
-	    //	  printf("s_depth=%lf, vp=%lf, vs=%lf, density=%lf, k=%d \n", (*s_depth)[i], (*vp)[i], (*vs)[i], (*density)[i],i);
+	    	  printf("s_depth=%lf, vp=%lf, vs=%lf, density=%lf, k=%d \n", (*s_depth)[i], (*vp)[i], (*vs)[i], (*density)[i],i);
 	    	}
 	  }
   *num_model_depth=i;
