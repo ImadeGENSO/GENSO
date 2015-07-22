@@ -31,7 +31,7 @@
 #    characters. Directories must be ended by / (unix) or \ (dos)!
 #
 #===============================================================================
- '/home/hase/sichuan_short_new/'
+ './'
  'ss10hz.tz'  'ss10hz.tr'  'ss10hz.tt'  'ss10hz.tp'
  'ds10hz.tz'  'ds10hz.tr'  'ds10hz.tt'  'ds10hz.tp'
  'cl10hz.tz'  'cl10hz.tr'  'cl10hz.tp'
